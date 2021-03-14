@@ -11,7 +11,7 @@
 cl_display_hud = 1; 	-- Отображение HUD игрока 0 -1
 cl_drunken_cam = 0; 	-- Пьяная камера 0 - 1
 ThirdPersonView = 0; 	-- Вид от 3 лица 0 - 1
-ai_noupdate = 0; 		-- Реакция врагов на тебя 0 - 1
+ai_noupdate = 0; 	-- Реакция врагов на тебя 0 - 1
 
 -- Action
 Input:BindAction("SAVEPOS", "f9", "default");
