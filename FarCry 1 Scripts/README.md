@@ -29,16 +29,8 @@
 ..\FarCry\Languages\Movies\English\*.bik
 ```
 
-Input:BindCommandToKey("#ToggleGod()", "backspace", 1);
-Input:BindCommandToKey("#GetAmmo()", "o", 1);
-Input:BindCommandToKey("#GetWeapons()", "p", 1);
-Input:BindCommandToKey("#DefaultSpeed()", "/", 1);
-Input:BindCommandToKey("#DecreseSpeed()", ",", 1);
-Input:BindCommandToKey("#IncreseSpeed()", ".", 1);
-Input:BindCommandToKey("#GetCoordinate()", "=", 1);
-
 ### Как использовать читы в игре
-**В игре: **
+**В игре:**  
 Клавиша `F1` активирует 3 лицо главного героя (В оригинале есть команды на клавишах с `F1` по `F6`)  
 Клавиша `backspace` даёт бесмертие персонажу  
 Клавиша `o` даёт патроны персонажу  
@@ -46,4 +38,14 @@ Input:BindCommandToKey("#GetCoordinate()", "=", 1);
 Клавиша `/` сбрасывает скорость до дефолтного значения (Возможно не работает)  
 Клавиша `,` уменьшает скорость персонажа (Возможно не работает)  
 Клавиша `.` увеличивает скорость персонажа (Возможно не работает)  
-Клавиша `=` получает координаты персонажа
+Клавиша `=` получает координаты персонажа  
+
+**В консоли игры**  
+`ToggleGod()`  
+`GetAmmo()`  
+`GetWeapons()`  
+`DefaultSpeed()`  
+`DecreseSpeed()`  
+`IncreseSpeed()`  
+`GetCoordinate()`  
+`SetCoordinate(coordinate)`  
