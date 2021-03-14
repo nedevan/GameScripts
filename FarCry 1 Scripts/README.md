@@ -26,7 +26,7 @@
 ### Упростить вход в игру  
 Если мы хотим удалить начальные заставки, нужно удалить файлы (Crytek.bik, Ubi.bik, sandbox.bik) в дериктории:  
 ```Console
-\FarCry\Languages\Movies\English
+..\FarCry\Languages\Movies\English\*.bik
 ```
 
 ### Как использовать читы в игре
