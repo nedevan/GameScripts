@@ -11,7 +11,7 @@
 cl_display_hud = 1; 	-- Отображение HUD игрока 0 -1
 cl_drunken_cam = 0; 	-- Пьяная камера 0 - 1
 ThirdPersonView = 0; 	-- Вид от 3 лица 0 - 1
-ai_noupdate = 0; 	-- Реакция врагов на тебя 0 - 1
+ai_noupdate = 0; 		-- Реакция врагов на тебя 0 - 1. 0 - есть агрессия; 1 - нет агрессии
 
 -- Action
 Input:BindAction("SAVEPOS", "f9", "default");
@@ -71,8 +71,13 @@ end
 
 -- Телепортирует на указанную точку
 function Teleport(coordinate)
-	_localplayer:SetPos(coordinate);
+	SetCoordinate(coordinate);
 	SetMessage("Teleport!");
+end
+
+-- Установить позицию игрока
+function SetCoordinate(coordinate)
+	_localplayer:SetPos(coordinate);
 end
 
 -- Получить координаты игрока
