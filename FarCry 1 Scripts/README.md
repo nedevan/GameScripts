@@ -41,11 +41,11 @@
 Клавиша `=` получает координаты персонажа  
 
 **В консоли игры**  
-`ToggleGod()`  
-`GetAmmo()`  
-`GetWeapons()`  
-`DefaultSpeed()`  
-`DecreseSpeed()`  
-`IncreseSpeed()`  
-`GetCoordinate()`  
-`SetCoordinate(coordinate)`  
+`ToggleGod()` - даёт бесмертие персонажу  
+`GetAmmo()` - даёт патроны персонажу  
+`GetWeapons()` - даёт все оружие в игре персонажу  
+`DefaultSpeed()` - сбрасывает скорость до дефолтного значения (Возможно не работает)  
+`DecreseSpeed()` - уменьшает скорость персонажа (Возможно не работает)  
+`IncreseSpeed()` - увеличивает скорость персонажа (Возможно не работает)  
+`GetCoordinate()` - получает координаты персонажа  
+`SetCoordinate(coordinate)` -   
