@@ -27,42 +27,41 @@ namespace IngameScript
         private IMyTextPanel panel;
 
         /** Двери */
-        private IMyDoor MainDoor, FirstDoor, SecondDoor, HangarDoor;
+        private IMyDoor mainDoor, firstDoor, secondDoor, hangarDoor;
 
         /** Вентиляция */
-        private IMyAirVent VMain, VSpace, VHangar;
+        private IMyAirVent mainAirVent, spaceAirVent, hangarAirVent;
 
         public Program()
         {
-            // TODO Перенести инициализацию кода сюда
+            /** Информационная панель */
+            panel = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
+
+            /** Двери */
+            mainDoor = GridTerminalSystem.GetBlockWithName("MainDoor") as IMyDoor;
+            firstDoor = GridTerminalSystem.GetBlockWithName("FirstDoor") as IMyDoor;
+            secondDoor = GridTerminalSystem.GetBlockWithName("SecondDoor") as IMyDoor;
+            hangarDoor = GridTerminalSystem.GetBlockWithName("HangarDoor") as IMyDoor;
+
+            /** Вентиляция */
+            mainAirVent = GridTerminalSystem.GetBlockWithName("VMain") as IMyAirVent;
+            spaceAirVent = GridTerminalSystem.GetBlockWithName("VSpace") as IMyAirVent;
+            hangarAirVent = GridTerminalSystem.GetBlockWithName("VHangar") as IMyAirVent;
         }
 
         void Main()
         {
-            IMyTextPanel panel = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
-
-            /** Двери */
-            IMyDoor MainDoor = GridTerminalSystem.GetBlockWithName("MainDoor") as IMyDoor,
-                    FirstDoor = GridTerminalSystem.GetBlockWithName("FirstDoor") as IMyDoor,
-                    SecondDoor = GridTerminalSystem.GetBlockWithName("SecondDoor") as IMyDoor,
-                    HangarDoor = GridTerminalSystem.GetBlockWithName("HangarDoor") as IMyDoor;
-
-            /** Вентиляция */
-            IMyAirVent VMain = GridTerminalSystem.GetBlockWithName("VMain") as IMyAirVent,
-                       VSpace = GridTerminalSystem.GetBlockWithName("VSpace") as IMyAirVent,
-                       VHangar = GridTerminalSystem.GetBlockWithName("VHangar") as IMyAirVent;
-
             String text = "";
 
             /** Двери */
             text += "Двери:\n";
-            if(MainDoor.Open) {
+            if(mainDoor.Open) {
                 text += "Жилой отсек: открыт\n";
             } else {
                 text += "Жилой отсек: закрыт\n";
             }
 
-            if(FirstDoor.Open) {
+            if(firstDoor.Open) {
                 text += "Служебный отсек: открыт\n\n";
             } else {
                 text += "Служебный отсек: закрыт\n\n";
@@ -70,9 +69,9 @@ namespace IngameScript
 
             /** Кислород: */
             text += "Кислород в отсеках:\n";
-            text += "Жилой отсек: " + GetPercent(VMain.GetOxygenLevel(), 1).ToString() + "%\n";
-            text += "Служебный отсек: " + GetPercent(VSpace.GetOxygenLevel(), 1).ToString() + "%\n";
-            text += "Ангарный отсек: " + GetPercent(VHangar.GetOxygenLevel(), 1).ToString() + "%\n\n";
+            text += "Жилой отсек: " + GetPercent(mainAirVent.GetOxygenLevel(), 1).ToString() + "%\n";
+            text += "Служебный отсек: " + GetPercent(spaceAirVent.GetOxygenLevel(), 1).ToString() + "%\n";
+            text += "Ангарный отсек: " + GetPercent(hangarAirVent.GetOxygenLevel(), 1).ToString() + "%\n\n";
 
             /** Баки */
             text += "Баки:\n";
@@ -82,11 +81,11 @@ namespace IngameScript
             /** Энергия: */
             text += "Энергия: " + GetBatteriesStatus(GetBatteries("Батарея (БК)")) + "\n\n";
 
-            /** HangarDoor.Open &&  MainDoor.Open */
-            if(MainDoor.Open) {
-                VSpace.Depressurize = false;
+            /** hangarDoor.Open &&  mainDoor.Open */
+            if(mainDoor.Open) {
+                spaceAirVent.Depressurize = false;
             } else {
-                VSpace.Depressurize = true;
+                spaceAirVent.Depressurize = true;
             }
 
             panel.WriteText(text);
@@ -164,24 +163,6 @@ namespace IngameScript
             for(int i = 0; i < batteries.Count; i++) {
                 if(batteries[i].DisplayNameText.Equals(name)) {
                     result.Add(batteries[i]);
-                }
-            }
-
-            return result;
-        }
-
-        /** Получить ангарные двери */
-        private List<IMyDoor> GetHangarDoor(String name)
-        {
-            // получаем все гурппы
-            List<IMyBlockGroup> groups = new List<IMyBlockGroup>();
-            List<IMyDoor> result = new List<IMyDoor>();
-
-            GridTerminalSystem.GetBlockGroups(groups);
-
-            for(int i = 0; i < groups.Count; i++) {
-                if(groups[i].Name.Equals(name)) {
-                    result.Add((IMyDoor)result[i]);
                 }
             }
 
