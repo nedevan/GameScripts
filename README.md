@@ -6,7 +6,7 @@
 ```Console
 ../FarCry 1/
 ```
-2. **SpaceEnginers** - читы на игру SpaceEnginers. (Описание в папке)
+2. **Space Engineers** - читы на игру Space Engineers. (Описание в папке)
 ```Console
-../SpaceEnginers/
+../Space Engineers/
 ```
