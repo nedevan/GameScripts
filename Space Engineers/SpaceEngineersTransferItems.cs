@@ -32,13 +32,13 @@ namespace IngameScript
         private List<IMyTerminalBlock> blocks;
 
         /** Главный инвентарь */
-        private IMyTerminalBlock inventoryMain;
+        private IMyTerminalBlock mainInventory;
 
         /** Главный дисплей */
-        private IMyTextPanel displayMain;
+        private IMyTextPanel mainDisplay;
 
         /** Дополнительные инвентари */
-        private List<IMyTerminalBlock> inventoryAdditions;
+        private List<IMyTerminalBlock> additionalInventory;
 
         public Program()
         {
@@ -50,37 +50,40 @@ namespace IngameScript
             GridTerminalSystem.GetBlocksOfType(blocks);
 
             /** Получаем главный инвентарь */
-            inventoryMain = getTerminalBlockByTag(blocks, INVENTORY_MAIN_TAG);
+            mainInventory = getTerminalBlockByTag(blocks, INVENTORY_MAIN_TAG);
 
             /** Получаем главный дисплей */
-            displayMain = (IMyTextPanel)getTerminalBlockByTag(blocks, DISPLAY_MAIN_TAG);
+            mainDisplay = (IMyTextPanel)getTerminalBlockByTag(blocks, DISPLAY_MAIN_TAG);
 
-            if (inventoryMain != null)
+            if (mainInventory != null)
             {
                 /** Дополнительные инвентари */
-                inventoryAdditions = new List<IMyTerminalBlock>();
+                additionalInventory = new List<IMyTerminalBlock>();
                 foreach (IMyTerminalBlock block in blocks)
                 {
                     if (block.CustomName.Contains(INVENTORY_ADDITIONAL_TAG))
                     {
-                        inventoryAdditions.Add(block);
+                        additionalInventory.Add(block);
                     }
                 }
             }
 
-            displayMain.WriteText("");
-            displayMain.WriteText($"Дополнительных инвентарей: {inventoryAdditions.Count}шт.\n", true);
+            if (mainDisplay != null)
+            {
+                mainDisplay.WriteText("");
+                mainDisplay.WriteText($"Дополнительных инвентарей: {additionalInventory.Count}шт.\n", true);
+            }
         }
 
         public void Main(string argument, UpdateType updateSource)
         {
             /** Перекладываю шмотки */
-            foreach (IMyTerminalBlock block in inventoryAdditions)
+            foreach (IMyTerminalBlock block in additionalInventory)
             {
                 IMyInventory inventoryAdditional = block.GetInventory();
                 while (inventoryAdditional.ItemCount > 0)
                 {
-                    inventoryAdditional.TransferItemTo(inventoryMain.GetInventory(), 0);
+                    inventoryAdditional.TransferItemTo(mainInventory.GetInventory(), 0);
                 }
             }
         }
