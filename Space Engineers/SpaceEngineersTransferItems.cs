@@ -23,9 +23,7 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
         private const string INVENTORY_ADDITIONAL_TAG = "(Инвентарь)";
-
         private const string INVENTORY_MAIN_TAG = "(Главный инвентарь)";
-
         private const string DISPLAY_MAIN_TAG = "(Главный дисплей)";
 
         /** Все блоки */
