@@ -61,6 +61,12 @@ namespace IngameScript
         private const string BATTAREY_TAG = "(Батарея)";
         private const string AIR_VENT_TAG = "(Вентиляция)";
 
+        // Моды дверей
+        private const string DOOR_CLOSE_MODE = "CLOSE";
+        private const string DOOR_OPEN_MODE = "OPEN";
+        private const string DOOR_BLOCK_MODE = "BLOCK";
+        private const string DOOR_UNBLOCK_MODE = "UNBLOCK";
+
         // Все блоки структуры на которой стоит программируемый блок
         private List<IMyTerminalBlock> AllBlocksList = new List<IMyTerminalBlock>();
 
@@ -70,7 +76,7 @@ namespace IngameScript
         // Двери
         private List<IMyDoor> DoorsList = new List<IMyDoor>();
         private List<IMyDoor> LifeZoneDoorsList = new List<IMyDoor>();
-        private List<IMyDoor> SpaceDoorsList = new List<IMyDoor>();
+        private List<IMyDoor> SpaceZoneDoorsList = new List<IMyDoor>();
 
         // Вентиляция 
         private List<IMyAirVent> AirVentsList = new List<IMyAirVent>();
@@ -85,9 +91,10 @@ namespace IngameScript
         // Батареи
         private List<IMyBatteryBlock> BatteriesList = new List<IMyBatteryBlock>();
 
+        // Инициализация программы 1 раз за компиляцию 
         public Program()
         {
-            /** Выполнение программы каждые 100 миллисекунд */
+            // Выполнение Main() каждые 100 миллисекунд
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
 
             AllBlocksList = new List<IMyTerminalBlock>();
@@ -155,7 +162,7 @@ namespace IngameScript
                 // Инициализируем вентиляторы в шлюзе
                 if (door.CustomName.Contains(ZONE_SPACE)) 
                 {
-                    SpaceDoorsList.Add(door as IMyDoor);
+                    SpaceZoneDoorsList.Add(door as IMyDoor);
                 }
             }
 
@@ -172,16 +179,57 @@ namespace IngameScript
                     HybrogenTankReservoirsList.Add(tankReservoir);
                 }
             }
+
+            // Разблокировка дверей, если они заблокированы
+            SetLifeZoneDoorMode(DOOR_UNBLOCK_MODE);
+            SetSpaceZoneDoorMode(DOOR_UNBLOCK_MODE);
+
+            SetLifeZoneDoorMode(DOOR_CLOSE_MODE);
+            SetSpaceZoneDoorMode(DOOR_CLOSE_MODE);
         }
 
+        // Вызывается каждый раз при обновлении программы 
+        // Runtime.UpdateFrequency = UpdateFrequency.Update100;
         public void Main()
+        {
+            RenderText();
+
+            // Статус двери в космос
+            bool isSpaceDoorsOpen = CheckOpenSpaceZoneDoors();
+            bool isLifeDoorsOpen = CheckOpenLifeZoneDoors();
+
+            if (isSpaceDoorsOpen) 
+            {
+                SetLifeZoneDoorMode(DOOR_CLOSE_MODE);
+                SetLifeZoneDoorMode(DOOR_BLOCK_MODE);
+                SetAirVentModeByTag(true);
+            }
+            else
+            {
+                SetLifeZoneDoorMode(DOOR_UNBLOCK_MODE);
+                SetAirVentModeByTag(true);
+            }
+
+            if (isLifeDoorsOpen)
+            {
+                SetSpaceZoneDoorMode(DOOR_CLOSE_MODE);
+                SetSpaceZoneDoorMode(DOOR_BLOCK_MODE);
+                SetAirVentModeByTag(false);
+            }
+            else
+            {
+                SetSpaceZoneDoorMode(DOOR_UNBLOCK_MODE);
+                SetAirVentModeByTag(true);
+            }
+        }
+
+        // Отрисовать текст
+        private void RenderText()
         {
             string text = LCD_TITLE_MESSAGE + "\n\n";
 
             // Двери
             text += GetLifeZoneDoorsStatus() + "\n\n";
-            // Проверить вентиляторы
-            checkAirVentMode();
 
             // Кислород
             text += "Кислород в отсеках:\n";
@@ -213,26 +261,10 @@ namespace IngameScript
         private string GetLifeZoneDoorsStatus()
         {
             string result = "Двери:\n";
-            int OpenDoorCount = 0;
 
             if(LifeZoneDoorsList.Count > 0) 
             {
-                foreach (IMyDoor mainDoor in LifeZoneDoorsList) 
-                {
-                    if (mainDoor.Status == DoorStatus.Opening || mainDoor.Status == DoorStatus.Open) 
-                    {
-                        OpenDoorCount++;
-                    }
-                }
-
-                if (OpenDoorCount > 0) 
-                {
-                    result += "Жилой отсек: открыт\n";
-                } 
-                else 
-                {
-                    result += "Жилой отсек: закрыт\n";
-                }
+                result = CheckOpenLifeZoneDoors() ? "Жилой отсек: открыт\n" : "Жилой отсек: закрыт\n";
             } 
             else 
             {
@@ -242,13 +274,32 @@ namespace IngameScript
             return result;
         }    
 
-        // Проверить режим работы вентиляторов по двери
-        private void checkAirVentMode()
+        // Проверить двери выхода в космос
+        private bool CheckOpenSpaceZoneDoors()
         {
-            foreach (IMyDoor mainDoor in LifeZoneDoorsList) 
+            foreach (IMyDoor door in SpaceZoneDoorsList) 
             {
-                SetAirVentModeByTag(!(mainDoor.Status == DoorStatus.Opening || mainDoor.Status == DoorStatus.Open));
+                if (door.Status == DoorStatus.Opening || door.Status == DoorStatus.Open) 
+                {
+                    return true;
+                }
             }
+
+            return false;
+        }
+
+        // Проверить двери выхода в жилую зону
+        private bool CheckOpenLifeZoneDoors()
+        {
+            foreach (IMyDoor door in LifeZoneDoorsList) 
+            {
+                if (door.Status == DoorStatus.Opening || door.Status == DoorStatus.Open) 
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // Получаем общий статус резервуаров
@@ -326,4 +377,42 @@ namespace IngameScript
 
             return GetPercent(total, ventsList.Count).ToString();
         }
+
+        // Установить мод двери по тэгу
+        private void SetDoorModeByTag(string tagName = ZONE_SPACE, string mode = DOOR_CLOSE_MODE)
+        {
+            List<IMyDoor> doorsList = tagName == ZONE_SPACE ? SpaceZoneDoorsList : LifeZoneDoorsList;
+
+            foreach (IMyDoor door in doorsList)
+            {
+                switch (mode)
+                {
+                    case DOOR_OPEN_MODE:
+                        door.OpenDoor();
+                        break;
+                    case DOOR_CLOSE_MODE:
+                        door.CloseDoor();
+                        break;
+                    case DOOR_BLOCK_MODE:
+                        door.Enabled = false;
+                        break;
+                    case DOOR_UNBLOCK_MODE:
+                        door.Enabled = true;
+                        break;
+                }
+            }
+        }
+
+        // Установить двери LifeZone закрытие
+        private void SetLifeZoneDoorMode(string mode = DOOR_CLOSE_MODE)
+        {
+            SetDoorModeByTag(ZONE_LIFE, mode);
+        }
+
+        // Установить двери SpaceZone закрытие
+        private void SetSpaceZoneDoorMode(string mode = DOOR_CLOSE_MODE)
+        {
+            SetDoorModeByTag(ZONE_SPACE, mode);
+        }
+    }  
 }
