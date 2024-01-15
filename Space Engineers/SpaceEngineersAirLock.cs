@@ -24,7 +24,7 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
         // Просто титульный текст в LCD панели  
-        const string LCD_TITLE_MESSAGE = "Жилой отсек";
+        private const string LCD_TITLE_MESSAGE = "Жилой отсек";
 
         // -----------------------------------------------------------
         // 1. Дверям нужно дать название:
@@ -48,45 +48,48 @@ namespace IngameScript
         // -----------------------------------------------------------
 
         // Доступные зоны для вентиляторов
-        const string ZONE_SPACE = "(Шлюз)";
-        const string ZONE_LIFE = "(Жилая зона)";
+        private const string ZONE_SPACE = "(Шлюз)";
+        private const string ZONE_LIFE = "(Жилая зона)";
 
         // Типы газов
-        const string OXYGEN = "(Кислород)";
-        const string HYBROGEN = "(Водород)";
+        private const string OXYGEN = "(Кислород)";
+        private const string HYBROGEN = "(Водород)";
 
-        const string LCD_TAG = "(Дисплей)";
-        const string DOOR_TAG = "(Дверь)";
-        const string RESERVOIR_TAG = "(Резервуар)";
-        const string BATTAREY_TAG = "(Батарея)";
-        const string AIR_VENT_TAG = "(Вентиляция)";
+        private const string LCD_TAG = "(Дисплей)";
+        private const string DOOR_TAG = "(Дверь)";
+        private const string RESERVOIR_TAG = "(Резервуар)";
+        private const string BATTAREY_TAG = "(Батарея)";
+        private const string AIR_VENT_TAG = "(Вентиляция)";
 
         // Все блоки структуры на которой стоит программируемый блок
-        List<IMyTerminalBlock> AllBlocksList = new List<IMyTerminalBlock>();
+        private List<IMyTerminalBlock> AllBlocksList = new List<IMyTerminalBlock>();
 
         // Информационная панель
-        List<IMyTextPanel> PanelsList = new List<IMyTextPanel>();
+        private List<IMyTextPanel> PanelsList = new List<IMyTextPanel>();
 
         // Двери
-        List<IMyDoor> DoorsList = new List<IMyDoor>();
-        List<IMyDoor> MainDoorsList = new List<IMyDoor>();
-        List<IMyDoor> SpaceDoorsList = new List<IMyDoor>();
+        private List<IMyDoor> DoorsList = new List<IMyDoor>();
+        private List<IMyDoor> LifeZoneDoorsList = new List<IMyDoor>();
+        private List<IMyDoor> SpaceDoorsList = new List<IMyDoor>();
 
         // Вентиляция 
-        List<IMyAirVent> AirVentsList = new List<IMyAirVent>();
-        List<IMyAirVent> MainVentsList = new List<IMyAirVent>();
-        List<IMyAirVent> SpaceVentsList = new List<IMyAirVent>();
+        private List<IMyAirVent> AirVentsList = new List<IMyAirVent>();
+        private List<IMyAirVent> LifeZoneVentsList = new List<IMyAirVent>();
+        private List<IMyAirVent> SpaceVentsList = new List<IMyAirVent>();
 
         // Любые резервуары по тэгу 
-        List<IMyGasTank> AllTankReservoirsList = new List<IMyGasTank>();
-        List<IMyGasTank> OxygenTankReservoirsList = new List<IMyGasTank>();
-        List<IMyGasTank> HybrogenTankReservoirsList = new List<IMyGasTank>();
+        private List<IMyGasTank> AllTankReservoirsList = new List<IMyGasTank>();
+        private List<IMyGasTank> OxygenTankReservoirsList = new List<IMyGasTank>();
+        private List<IMyGasTank> HybrogenTankReservoirsList = new List<IMyGasTank>();
 
         // Батареи
-        List<IMyBatteryBlock> BatteriesList = new List<IMyBatteryBlock>();
+        private List<IMyBatteryBlock> BatteriesList = new List<IMyBatteryBlock>();
 
         public Program()
         {
+            /** Выполнение программы каждые 100 миллисекунд */
+            Runtime.UpdateFrequency = UpdateFrequency.Update100;
+
             AllBlocksList = new List<IMyTerminalBlock>();
             GridTerminalSystem.GetBlocksOfType(AllBlocksList);
 
@@ -130,7 +133,7 @@ namespace IngameScript
                 //  Инициализируем вентиляторы в жилой зоне
                 if (airVent.CustomName.Contains(ZONE_LIFE))
                 {
-                    MainVentsList.Add(airVent as IMyAirVent);
+                    LifeZoneVentsList.Add(airVent as IMyAirVent);
                 }
                 
                 // Инициализируем вентиляторы в шлюзе
@@ -146,7 +149,7 @@ namespace IngameScript
                 //  Инициализируем вентиляторы в жилой зоне
                 if (door.CustomName.Contains(ZONE_LIFE))
                 {
-                    MainDoorsList.Add(door as IMyDoor);
+                    LifeZoneDoorsList.Add(door as IMyDoor);
                 }
                 
                 // Инициализируем вентиляторы в шлюзе
@@ -171,12 +174,12 @@ namespace IngameScript
             }
         }
 
-        void Main()
+        public void Main()
         {
             string text = LCD_TITLE_MESSAGE + "\n\n";
 
             // Двери
-            text += GetMainDoorsStatus() + "\n\n";
+            text += GetLifeZoneDoorsStatus() + "\n\n";
             // Проверить вентиляторы
             checkAirVentMode();
 
@@ -201,20 +204,20 @@ namespace IngameScript
         }
 
         // Получаем процент от числа 
-        float GetPercent(float min, float max)
+        private float GetPercent(float min, float max)
         {
             return min / (max / 100f);
         }
 
         // Получить общий статус дверей жилого отсека
-        string GetMainDoorsStatus()
+        private string GetLifeZoneDoorsStatus()
         {
             string result = "Двери:\n";
             int OpenDoorCount = 0;
 
-            if(MainDoorsList.Count > 0) 
+            if(LifeZoneDoorsList.Count > 0) 
             {
-                foreach (IMyDoor mainDoor in MainDoorsList) 
+                foreach (IMyDoor mainDoor in LifeZoneDoorsList) 
                 {
                     if (mainDoor.Status == DoorStatus.Opening || mainDoor.Status == DoorStatus.Open) 
                     {
@@ -240,16 +243,16 @@ namespace IngameScript
         }    
 
         // Проверить режим работы вентиляторов по двери
-        void checkAirVentMode()
+        private void checkAirVentMode()
         {
-            foreach (IMyDoor mainDoor in MainDoorsList) 
+            foreach (IMyDoor mainDoor in LifeZoneDoorsList) 
             {
                 SetAirVentModeByTag(!(mainDoor.Status == DoorStatus.Opening || mainDoor.Status == DoorStatus.Open));
             }
         }
 
         // Получаем общий статус резервуаров
-        string GetTankReservoirsStatusByTag(string tagName)
+        private string GetTankReservoirsStatusByTag(string tagName)
         {
             List<IMyGasTank> tankList = tagName == OXYGEN ? OxygenTankReservoirsList : HybrogenTankReservoirsList;
 
@@ -274,7 +277,7 @@ namespace IngameScript
         }
 
         //  Получить общий статус батарей
-        string GetBatteriesStatus()
+        private string GetBatteriesStatus()
         {
             string result = "";
             float percent = 0f;
@@ -298,7 +301,7 @@ namespace IngameScript
         }
 
         // Изменить режим работы вентиляторов по тэгу
-        void SetAirVentModeByTag(bool isVoid = false, string tagName = ZONE_SPACE)
+        private void SetAirVentModeByTag(bool isVoid = false, string tagName = ZONE_SPACE)
         {
             foreach (IMyAirVent airVent in AirVentsList)
             {
@@ -310,11 +313,11 @@ namespace IngameScript
         }
 
         // Проверить кол-во кислорода в комнатах
-        string GetOxygenLevelStatusInRoomByTag(string tagName)
+        private string GetOxygenLevelStatusInRoomByTag(string tagName)
         {
             float total = 0;
 
-            List<IMyAirVent> ventsList = tagName == ZONE_LIFE ? MainVentsList : SpaceVentsList;
+            List<IMyAirVent> ventsList = tagName == ZONE_LIFE ? LifeZoneVentsList : SpaceVentsList;
 
             foreach (IMyAirVent airVent in ventsList)
             {
