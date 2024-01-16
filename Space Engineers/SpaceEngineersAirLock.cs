@@ -91,9 +91,14 @@ namespace IngameScript
         // Батареи
         private List<IMyBatteryBlock> BatteriesList = new List<IMyBatteryBlock>();
 
+        IMyTextSurface _drawingSurface;
+        RectangleF _viewport;
+
         // Инициализация программы 1 раз за компиляцию 
         public Program()
-        {
+        {   
+            InitRenderText();
+
             // Выполнение Main() каждые 100 миллисекунд
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
 
@@ -192,7 +197,7 @@ namespace IngameScript
         // Runtime.UpdateFrequency = UpdateFrequency.Update100;
         public void Main()
         {
-            RenderText();
+            UpdateRenderText();
 
             // Статус двери в космос
             bool isSpaceDoorsOpen = CheckOpenSpaceZoneDoors();
@@ -223,13 +228,66 @@ namespace IngameScript
             }
         }
 
-        // Отрисовать текст
-        private void RenderText()
+        // Инициализируем отрисовку текста
+        private void InitRenderText()
         {
-            string text = LCD_TITLE_MESSAGE + "\n\n";
+            // Me — это программируемый блок, который запускает этот сценарий.
+            // Получаем большой дисплей, который является первой поверхностью
+            _drawingSurface = Me.GetSurface(0);
+
+            // Вычисляем смещение области просмотра, центрируя размер поверхности по размеру текстуры
+            _viewport = new RectangleF(
+                (_drawingSurface.TextureSize - _drawingSurface.SurfaceSize) / 2f,
+                _drawingSurface.SurfaceSize
+            );
+        }
+
+        // Обновляем отрисовку текста
+        private void UpdateRenderText()
+        {
+            // Начать новый кадр
+            var frame = _drawingSurface.DrawFrame();
+
+            // Добавить титульное название
+            frame.Add(GetSpriteTextRow(LCD_TITLE_MESSAGE + "\n\n", new Vector2(0, 0), 2.0f));
+
+            // Добавить все остальные записи (Засовываем туда строку с переносами \n) так проще
+            frame.Add(GetSpriteTextRow(RenderText(), new Vector2(0, 90)));
+
+            frame.Dispose();
+        }
+
+        // Создать одну строку
+        public MySprite GetSpriteTextRow(string message, Vector2 position, float scale = 1.0f)
+        {   
+            // Отступ слева и сверху
+            Vector2 padding = new Vector2(5, 5);
+
+            return new MySprite
+            {
+                Type = SpriteType.TEXT,
+                Data = message,
+                Size = _viewport.Size,
+                Color = Color.White,
+                RotationOrScale = scale,
+                Alignment = TextAlignment.LEFT,
+                
+                // Инфа от разрабов API
+                // https://github.com/malware-dev/MDK-SE/wiki/Text-Panels-and-Drawing-Sprites
+                //
+                // Установите начальную позицию и не забудьте добавить смещение области просмотра.
+                // Речь про _viewport.Position
+                Position = position + _viewport.Position + padding,
+            };
+        }
+
+        // Отрисовать текст
+        private string RenderText()
+        {
+            string text = "";
 
             // Двери
-            text += GetLifeZoneDoorsStatus() + "\n\n";
+            text += GetLifeZoneDoorsStatus() + "\n";
 
             // Кислород
             text += "Кислород в отсеках:\n";
@@ -249,6 +307,8 @@ namespace IngameScript
             {
                 panel.WriteText(text);
             }
+
+            return text;
         }
 
         // Получаем процент от числа 
