@@ -51,11 +51,16 @@ namespace IngameScript
         private const string ZONE_SPACE = "(Шлюз)";
         private const string ZONE_LIFE = "(Жилая зона)";
 
+        // Варианты вывода информации
+        private const string SURFACE_FULL_CONTENT = "(Полная информация)";
+        private const string SURFACE_DOOR_CONTENT = "(Статус дверей)";
+
         // Типы газов
         private const string OXYGEN = "(Кислород)";
         private const string HYBROGEN = "(Водород)";
 
         private const string LCD_TAG = "(Дисплей)";
+        private const string SURFACE_TAG = "(Маленький дисплей)";
         private const string DOOR_TAG = "(Дверь)";
         private const string RESERVOIR_TAG = "(Резервуар)";
         private const string BATTAREY_TAG = "(Батарея)";
@@ -71,7 +76,12 @@ namespace IngameScript
         private List<IMyTerminalBlock> AllBlocksList = new List<IMyTerminalBlock>();
 
         // Информационная панель
+        // https://github.com/malware-dev/MDK-SE/wiki/Text-Panels-and-Drawing-Sprites
         private List<IMyTextPanel> PanelsList = new List<IMyTextPanel>();
+        private List<IMyTextSurface> SurfaceFullContentList = new List<IMyTextSurface>();
+        private List<IMyTextSurface> SurfaceDoorContentList = new List<IMyTextSurface>();
+        private List<RectangleF> SurfaceFullViewportList = new List<RectangleF>();
+        private List<RectangleF> SurfaceDoorViewportList = new List<RectangleF>();
 
         // Двери
         private List<IMyDoor> DoorsList = new List<IMyDoor>();
@@ -91,14 +101,9 @@ namespace IngameScript
         // Батареи
         private List<IMyBatteryBlock> BatteriesList = new List<IMyBatteryBlock>();
 
-        IMyTextSurface _drawingSurface;
-        RectangleF _viewport;
-
         // Инициализация программы 1 раз за компиляцию 
         public Program()
         {   
-            InitRenderText();
-
             // Выполнение Main() каждые 100 миллисекунд
             Runtime.UpdateFrequency = UpdateFrequency.Update100;
 
@@ -112,6 +117,32 @@ namespace IngameScript
                 if (block.CustomName.Contains(LCD_TAG)) 
                 {
                     PanelsList.Add(block as IMyTextPanel);
+                }
+
+                // Добавляем TextSurface панели
+                if (block.CustomName.Contains(SURFACE_TAG))
+                {
+                    IMyTextSurface surface = (block as IMyTextSurfaceProvider).GetSurface(0);
+
+                    // Полная информация
+                    if (block.CustomName.Contains(SURFACE_FULL_CONTENT)) 
+                    {
+                        SurfaceFullContentList.Add(surface as IMyTextSurface);
+
+                        // Вычисляем смещение области просмотра для дисплея, центрируя размер поверхности по размеру текстуры
+                        RectangleF viewport = new RectangleF((surface.TextureSize - surface.SurfaceSize) / 2f, surface.SurfaceSize);
+                        SurfaceFullViewportList.Add(viewport);
+                    }
+
+                    // Информация по дверям
+                    if (block.CustomName.Contains(SURFACE_DOOR_CONTENT)) 
+                    {
+                        SurfaceDoorContentList.Add(surface as IMyTextSurface);
+
+                        // Вычисляем смещение области просмотра для дисплея, центрируя размер поверхности по размеру текстуры
+                        RectangleF viewport = new RectangleF((surface.TextureSize - surface.SurfaceSize) / 2f, surface.SurfaceSize);
+                        SurfaceDoorViewportList.Add(viewport);
+                    }
                 }
 
                 // Добавляем двери
@@ -228,46 +259,53 @@ namespace IngameScript
             }
         }
 
-        // Инициализируем отрисовку текста
-        private void InitRenderText()
-        {
-            // Me — это программируемый блок, который запускает этот сценарий.
-            // Получаем большой дисплей, который является первой поверхностью
-            _drawingSurface = Me.GetSurface(0);
-
-            // Вычисляем смещение области просмотра, центрируя размер поверхности по размеру текстуры
-            _viewport = new RectangleF(
-                (_drawingSurface.TextureSize - _drawingSurface.SurfaceSize) / 2f,
-                _drawingSurface.SurfaceSize
-            );
-        }
-
         // Обновляем отрисовку текста
         private void UpdateRenderText()
         {
-            // Начать новый кадр
-            var frame = _drawingSurface.DrawFrame();
+            // Чтобы легко узнать индекс элемента SurfaceViewportList, так как SurfaceFullContentList и SurfaceFullViewportList взаимосвязаны
+            int index = 0;
+            foreach (IMyTextSurface surface in SurfaceFullContentList)
+            {
+                // Создать новый кадр
+                MySpriteDrawFrame frame = surface.DrawFrame();
 
-            // Добавить титульное название
-            frame.Add(GetSpriteTextRow(LCD_TITLE_MESSAGE + "\n\n", new Vector2(0, 0), 2.0f));
+                // Добавить титульное название
+                frame.Add(GetSpriteTextRow(LCD_TITLE_MESSAGE + "\n\n", new Vector2(0, 0), SurfaceFullViewportList[index], 2.0f));
 
-            // Добавить все остальные записи (Засовываем туда строку с переносами \n) так проще
-            frame.Add(GetSpriteTextRow(RenderText(), new Vector2(0, 90)));
+                // Добавить все остальные записи (Засовываем туда строку с переносами \n) так проще
+                frame.Add(GetSpriteTextRow(GetFullStatusText(), new Vector2(0, 90), SurfaceFullViewportList[index]));
 
-            frame.Dispose();
+                frame.Dispose();
+
+                WriteToLCD(GetFullStatusText());
+                index++;
+            }
+
+            index = 0;
+            foreach (IMyTextSurface surface in SurfaceDoorContentList)
+            {
+                // Создать новый кадр
+                MySpriteDrawFrame frame = surface.DrawFrame();
+
+                // Добавить все остальные записи (Засовываем туда строку с переносами \n) так проще
+                frame.Add(GetSpriteTextRow(GetLifeZoneDoorsStatus(), new Vector2(0, 60), SurfaceDoorViewportList[index]));
+
+                frame.Dispose();
+                index++;
+            }
         }
 
         // Создать одну строку
-        public MySprite GetSpriteTextRow(string message, Vector2 position, float scale = 1.0f)
+        public MySprite GetSpriteTextRow(string message, Vector2 position, RectangleF viewport, float scale = 1.0f)
         {   
             // Отступ слева и сверху
-            Vector2 padding = new Vector2(5, 5);
+            Vector2 padding = new Vector2(15, 15);
 
             return new MySprite
             {
                 Type = SpriteType.TEXT,
                 Data = message,
-                Size = _viewport.Size,
+                Size = viewport.Size,
                 Color = Color.White,
                 RotationOrScale = scale,
                 Alignment = TextAlignment.LEFT,
@@ -275,14 +313,14 @@ namespace IngameScript
                 // Инфа от разрабов API
                 // https://github.com/malware-dev/MDK-SE/wiki/Text-Panels-and-Drawing-Sprites
                 //
-                // Установите начальную позицию и не забудьте добавить смещение области просмотра.
-                // Речь про _viewport.Position
-                Position = position + _viewport.Position + padding,
+                // Установите начальную позицию и не забудьте добавить смещение области просмотра. 
+                // Речь про viewport.Position
+                Position = position + viewport.Position + padding,
             };
         }
-
-        // Отрисовать текст
-        private string RenderText()
+        
+        // Получить полный статус (текст)
+        private string GetFullStatusText()
         {
             string text = "";
 
@@ -302,13 +340,17 @@ namespace IngameScript
             // Энергия
             text += "Энергия: " + GetBatteriesStatus() + "\n\n";
 
+            return text;
+        }
+
+        // Записать в LCD панели
+        private void WriteToLCD(string message)
+        {
             // Выводим на панели
             foreach (IMyTextPanel panel in PanelsList)
             {
-                panel.WriteText(text);
+                panel.WriteText(message);
             }
-
-            return text;
         }
 
         // Получаем процент от числа 
